@@ -1,0 +1,22 @@
+public class Logs {
+
+    private static Map <Integer, String> statusCodeInfo = new Map<Integer, String>{
+                                                              200 => 'OK',
+                                                              404 => 'NOT_FOUND'};
+
+    public static Log__c createLogRecord(RestResponse res, String requestURI) {
+
+       DateTime nowTime =DateTime.now();
+       Log__c log = new Log__c(Name = requestURI, nowTime__c = nowTime );
+       log.StatusCode__c = res.statusCode;
+       log.StatusInfo__c = statusCodeInfo.get(res.statusCode);
+    
+        if(res.responseBody != null) {
+           log.ResponseBody__c = res.responseBody.toString();
+         }
+       
+         insert log;
+         return log;
+
+        }
+}
