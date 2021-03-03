@@ -1,0 +1,44 @@
+@RestResource(urlMapping='/Animal__c/*')
+
+global class AnimalRestService {
+
+   @HttpGet
+    global static void getRecord() {
+       RestRequest request = RestContext.request;
+       RestResponse res = new RestResponse();
+       String animalIds =request.requestURI.substring(request.requestUri.lastIndexOf('/'+1));
+       Integer animalId = Integer.valueOf(animalIds);
+       List<Animal__c> result = [SELECT Name, Eats__c, Says__c, extId__c 
+                                 FROM Animal__c 
+                                 WHERE extId__c =: animalId ];
+       if(result.size() == 0) {
+         HttpResponse response = AnimalsCallouts.getAnimal(animalId);
+         Animal__c an = AnimalModel.createAnimal(response.getBody());
+           if(an.Eats__c.length() != 0  && an.Says__c.length() != 0 && an.name.length() != 0) {
+              insert an;
+              res.responseBody = Blob.valueOf(JSON.serialize(an));
+              res.statusCode = 200;
+           } else {
+              res.statusCode = 404;
+           }
+       }
+        if(result.size() > 0) {
+           res.responseBody = Blob.valueOf(JSON.serialize(result));
+           res.statusCode = 200;
+        }
+   }
+        
+        
+    
+   
+   @HttpPost
+    global static Id createAnimals(String name, String eats, String says, Integer animalId) {
+       Animal__c animal = new Animal__c();
+       animal.Name = name;
+       animal.Eats__c= eats;
+       animal.extId__c = animalId;
+       animal.Says__c = says;
+       insert animal;
+       return animal.Id;
+    }
+}
